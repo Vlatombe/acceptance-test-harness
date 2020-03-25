@@ -90,6 +90,11 @@ public class User extends ContainerPageObject {
         return this;
     }
 
+    public TokenStore apiTokens() {
+        configure();
+        return new TokenStore(this,"/userProperty0"); // fragile but I don't have better for now
+    }
+
     public void delete() {
         visit("delete");
         clickButton("Yes");
@@ -114,5 +119,36 @@ public class User extends ContainerPageObject {
     @Override
     public int hashCode() {
         return id().hashCode();
+    }
+
+    @Describable("API Tokens")
+    public static class TokenStore extends PageAreaImpl {
+        public static final String PREFIX = "tokenStore";
+        public final Control addButton = control("repeatable-add");
+
+        public TokenStore(User user, String path) {
+            super(user, path);
+        }
+
+        public String newToken(String name) {
+            String tokenPath = createPageArea(PREFIX, addButton::click);
+            return new ApiToken(getPage(), tokenPath).generate(name);
+        }
+    }
+
+    private static class ApiToken extends PageAreaImpl {
+        private final Control name = control("tokenName");
+        private final Control generateButton = control(by.button("Generate"));
+        private final Control newTokenSpan = control(by.css(".new-token-value"));
+
+        public ApiToken(PageObject parent, String path) {
+            super(parent, path);
+        }
+
+        public String generate(String tokenName) {
+            name.set(tokenName);
+            generateButton.click();
+            return newTokenSpan.text();
+        }
     }
 }
